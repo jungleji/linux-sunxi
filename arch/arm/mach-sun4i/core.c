@@ -208,6 +208,7 @@ EXPORT_SYMBOL(g2d_size);
 
 static void __init reserve_g2d(void)
 {
+#if 0
     char *script_base = (char *)(PAGE_OFFSET + 0x3000000);
 
     if (sw_cfg_get_int(script_base, "g2d_para", "g2d_used"))
@@ -224,6 +225,11 @@ static void __init reserve_g2d(void)
     }
     else
     	g2d_start = g2d_size = 0;
+#endif
+	g2d_start = SW_G2D_MEM_BASE;
+	g2d_size = 0x1000000;
+	memblock_reserve(g2d_start, g2d_size);
+	pr_reserve_info("G2D ", g2d_start, g2d_size);
 }
 
 #else

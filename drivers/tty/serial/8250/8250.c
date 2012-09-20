@@ -1524,23 +1524,40 @@ int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
 	struct uart_8250_port *up =
 		container_of(port, struct uart_8250_port, port);
 
-	if (iir & UART_IIR_NO_INT)
-		return 0;
+	if (! (iir & UART_IIR_NO_INT)) {
+		spin_lock_irqsave(&port->lock, flags);
 
-	spin_lock_irqsave(&port->lock, flags);
+		status = serial_port_in(port, UART_LSR);
 
-	status = serial_port_in(port, UART_LSR);
+		DEBUG_INTR("status = %x...", status);
 
-	DEBUG_INTR("status = %x...", status);
+		if (status & (UART_LSR_DR | UART_LSR_BI))
+			status = serial8250_rx_chars(up, status);
+		serial8250_modem_status(up);
+		if (status & UART_LSR_THRE)
+			serial8250_tx_chars(up);
 
-	if (status & (UART_LSR_DR | UART_LSR_BI))
-		status = serial8250_rx_chars(up, status);
-	serial8250_modem_status(up);
-	if (status & UART_LSR_THRE)
-		serial8250_tx_chars(up);
+		spin_unlock_irqrestore(&port->lock, flags);
+		return 1;
+	} else if ((up->port.iotype == UPIO_MEM32) &&
+		  (iir & UART_IIR_BUSY) == UART_IIR_BUSY) {
+		/* The DesignWare APB UART has an Busy Detect (0x07)
+		 * interrupt meaning an LCR write attempt occurred while the
+		 * UART was busy. The interrupt must be cleared by reading
+		 * the UART status register (USR) and the LCR re-written. */
+		unsigned int mcr_t = serial_in(up, UART_MCR);
+		printk(">>> ttyS%d bus busy...\n", up->port.line);
+		//status = *(volatile u32 *)up->port.private_data;
+		serial_out(up, UART_MCR, mcr_t|(1<<4)); //to loopback mode
+		while(serial_in(up, UART_USR)&1)
+			serial_in(up, UART_RX);
+		serial_out(up, UART_LCR, up->lcr);
+		serial_out(up, UART_MCR, mcr_t);    //to normal mode
 
-	spin_unlock_irqrestore(&port->lock, flags);
-	return 1;
+		return 1;
+	}
+
+	return 0;
 }
 EXPORT_SYMBOL_GPL(serial8250_handle_irq);
 
