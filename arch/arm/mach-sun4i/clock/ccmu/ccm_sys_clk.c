@@ -351,14 +351,14 @@ static __s64 sys_clk_get_rate(__aw_ccu_sys_clk_e id)
 
         case AW_SYS_CLK_PLL4:
         {
-            #if(USE_PLL6M_REPLACE_PLL4)
-            if(MAGIC_VER_C == sw_get_ic_ver()) {
-                return sys_clk_get_rate(AW_SYS_CLK_PLL6);
-            }
-            #endif
+#if(USE_PLL6M_REPLACE_PLL4)
+		if(MAGIC_VER_C == sw_get_ic_ver()) {
+			return sys_clk_get_rate(AW_SYS_CLK_PLL6);
+		}
+#endif
 
-            return ccu_clk_uldiv(((__s64)24000000*aw_ccu_reg->Pll4Ctl.FactorN * (aw_ccu_reg->Pll4Ctl.FactorK + 1)   \
-                >> aw_ccu_reg->Pll4Ctl.FactorP), (aw_ccu_reg->Pll4Ctl.FactorM + 1));
+		return ccu_clk_uldiv(((__s64)24000000*aw_ccu_reg->Pll4Ctl.FactorN * (aw_ccu_reg->Pll4Ctl.FactorK + 1) \
+				      >> aw_ccu_reg->Pll4Ctl.FactorP), (aw_ccu_reg->Pll4Ctl.FactorM + 1));
         }
         case AW_SYS_CLK_PLL5:
         {

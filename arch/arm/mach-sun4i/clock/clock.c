@@ -81,7 +81,7 @@ static DEFINE_SPINLOCK(clockfw_lock);
 */
 int clk_init(void)
 {
-    __s32           i;
+    __s32           i, tmpFreq;
     struct clk      *tmpSclk;
 
     CCU_DBG("aw clock manager init!\n");
@@ -162,77 +162,82 @@ int clk_init(void)
     tmpSclk->clk->onoff = AW_CCU_CLK_ON;
     tmpSclk->set_clk(tmpSclk->clk);
 
-    if(MAGIC_VER_C == sw_get_ic_ver()) {
-        /* initiate PLL4 */
-        #if(USE_PLL6M_REPLACE_PLL4)
+    /* init pll4 frequency */
+    if((MAGIC_VER_C == sw_get_ic_ver()) && USE_PLL6M_REPLACE_PLL4)
+    {
         tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL4];
         tmpSclk->clk->onoff = AW_CCU_CLK_OFF;
         tmpSclk->set_clk(tmpSclk->clk);
-        #else
+    }
+    else
+    {
+        tmpFreq = 960;
         tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL4];
-        tmpSclk->clk->rate  = 960000000;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk->clk->onoff = AW_CCU_CLK_ON;
-        tmpSclk->set_clk(tmpSclk->clk);
-        #endif
-
-        /* sata pll set to 960mhz for c ver. */
-        tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL6];
-        #if(USE_PLL6M_REPLACE_PLL4)
-        tmpSclk->clk->rate  = 960000000;
-        #else
-        tmpSclk->clk->rate  = 600000000;
-        #endif
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk->clk->onoff = AW_CCU_CLK_ON;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL6M];
-        #if(USE_PLL6M_REPLACE_PLL4)
-        tmpSclk->clk->rate  = 160000000;
-        #else
-        tmpSclk->clk->rate  = 100000000;
-        #endif
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk->clk->onoff = AW_CCU_CLK_ON;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL62];
-        #if(USE_PLL6M_REPLACE_PLL4)
-        tmpSclk->clk->rate  = 480000000;
-        #else
-        tmpSclk->clk->rate  = 300000000;
-        #endif
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk->clk->onoff = AW_CCU_CLK_ON;
-        tmpSclk->set_clk(tmpSclk->clk);
-    } else {
-        /* initiate PLL4 */
-        tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL4];
-        tmpSclk->clk->rate  = 960000000;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk->clk->onoff = AW_CCU_CLK_ON;
-        tmpSclk->set_clk(tmpSclk->clk);
-
-        /* initiate PLL6 */
-        tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL6];
-        tmpSclk->clk->rate  = 600000000;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk->clk->onoff = AW_CCU_CLK_ON;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL6M];
-        tmpSclk->clk->rate  = 100000000;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk->clk->onoff = AW_CCU_CLK_ON;
-        tmpSclk->set_clk(tmpSclk->clk);
-        tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL62];
-        tmpSclk->clk->rate  = 300000000;
+        tmpSclk->clk->rate  = tmpFreq * 1000000;
         tmpSclk->set_clk(tmpSclk->clk);
         tmpSclk->clk->onoff = AW_CCU_CLK_ON;
         tmpSclk->set_clk(tmpSclk->clk);
     }
 
+    /* init pll6 frequency */
+    tmpFreq = 1200;
+    tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL6];
+    tmpSclk->clk->rate  = tmpFreq * 1000000;
+    tmpSclk->set_clk(tmpSclk->clk);
+    tmpSclk->clk->onoff = AW_CCU_CLK_ON;
+    tmpSclk->set_clk(tmpSclk->clk);
+    tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL6M];
+    if((tmpFreq/100)*100 == tmpFreq)
+    {
+        /* set cloce to 100Mhz */
+        tmpSclk->clk->rate  = 100 * 1000000;
+    }
+    else
+    {
+        /* not divide the clock */
+        tmpSclk->clk->rate  = (tmpFreq/6) * 1000000;
+    }
+    tmpSclk->set_clk(tmpSclk->clk);
+    tmpSclk->clk->onoff = AW_CCU_CLK_ON;
+    tmpSclk->set_clk(tmpSclk->clk);
+    tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL62];
+    tmpSclk->clk->rate  = (tmpFreq/2) * 1000000;
+    tmpSclk->set_clk(tmpSclk->clk);
+    tmpSclk->clk->onoff = AW_CCU_CLK_ON;
+    tmpSclk->set_clk(tmpSclk->clk);
+
     tmpSclk = &ccu_sys_clk[AW_SYS_CLK_PLL7];
     tmpSclk->clk->onoff = AW_CCU_CLK_ON;
     tmpSclk->set_clk(tmpSclk->clk);
+
+    tmpFreq = 24;
+
+    tmpSclk = clk_get(NULL, "apb1");
+    if(tmpSclk) {
+        struct clk      *tmpClk;
+        if(tmpFreq == 24) {
+            /* config apb clock source to OSC24M */
+            tmpClk = clk_get(NULL, "hosc");
+            if(tmpClk) {
+                clk_set_parent(tmpSclk, tmpClk);
+                clk_set_rate(tmpSclk, tmpFreq*1000000);
+            } else {
+                CCU_ERR("try to get hosc clock handle failed!\n");
+            }
+        } else {
+            /* config apb clock source to PLL6 */
+            tmpClk = clk_get(NULL, "sata_pll_2");
+            if(tmpClk) {
+                clk_set_rate(tmpSclk, 1000000);
+                clk_set_parent(tmpSclk, tmpClk);
+                clk_set_rate(tmpSclk, tmpFreq*1000000);
+            } else {
+                CCU_ERR("try to get hosc clock handle failed!\n");
+            }
+        }
+    } else {
+        CCU_ERR("try to get apb1 clock handle failed!\n");
+    }
 
     return 0;
 }

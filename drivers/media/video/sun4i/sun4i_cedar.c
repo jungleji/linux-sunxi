@@ -609,24 +609,22 @@ long cedardev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             clk_enable(dram_veclk);
 		break;
 
-		case IOCTL_SET_VE_FREQ:
-			{
-				int arg_rate = (int)arg;
-				if(arg_rate >= 320){
-					clk_set_rate(ve_moduleclk, pll4clk_rate/3);//ve_moduleclk rate is 320khz
-				}else if((arg_rate >= 240) && (arg_rate < 320)){
-					clk_set_rate(ve_moduleclk, pll4clk_rate/4);//ve_moduleclk rate is 240khz
-				}else if((arg_rate >= 160) && (arg_rate < 240)){
-					clk_set_rate(ve_moduleclk, pll4clk_rate/6);//ve_moduleclk rate is 160khz
-				}else{
-					printk("IOCTL_SET_VE_FREQ set ve freq error,%s,%d\n", __func__, __LINE__);
-				}
-				break;
-			}
-        case IOCTL_GETVALUE_AVS2:
-			/* Return AVS1 counter value */
-            return readl(cedar_devp->iomap_addrs.regs_avs + 0x88);
+	case IOCTL_SET_VE_FREQ: {
+		int arg_rate = (int)arg;
+		int v_div = 0;
+		unsigned long pl;
 
+		v_div = (pll4clk_rate / 1000000 + (arg_rate-1))/arg_rate;
+		pl = pll4clk_rate/v_div;
+		if (v_div <= 8 && v_div >= 1) {
+			pr_info("set ve module clk to %lu\n", pll4clk_rate/v_div);
+			clk_set_rate(ve_moduleclk, pll4clk_rate/v_div);
+		}
+		break;
+	}
+        case IOCTL_GETVALUE_AVS2:
+		/* Return AVS1 counter value */
+		return readl(cedar_devp->iomap_addrs.regs_avs + 0x88);
         case IOCTL_ADJUST_AVS2:
         {
             int arg_s = (int)arg;
