@@ -48,7 +48,7 @@ struct cpufreq_dvfs {
     unsigned int    volt;   /* voltage for the frequency    */
 };
 static struct cpufreq_dvfs dvfs_table[] = {
-    {.freq = 1056000000, .volt = 1500}, /* core vdd is 1.50v if cpu frequency is (1008Mhz, xxxxMhz] */
+    {.freq = 1056000000, .volt = 1700}, /* core vdd is 1.50v if cpu frequency is (1008Mhz, xxxxMhz] */
     {.freq = 1008000000, .volt = 1400}, /* core vdd is 1.40v if cpu frequency is (960Mhz, 1008Mhz]  */
     {.freq = 960000000,  .volt = 1400}, /* core vdd is 1.40v if cpu frequency is (912Mhz, 960Mhz]   */
     {.freq = 912000000,  .volt = 1350}, /* core vdd is 1.35v if cpu frequency is (864Mhz, 912Mhz]   */
@@ -244,9 +244,9 @@ static int __set_cpufreq_target(struct sun4i_cpu_freq_t *old, struct sun4i_cpu_f
             old_freq.div.axi_div = 3;
             ret |= __set_cpufreq_hw(&old_freq);
         }
-        if((old_freq.pll <= 1200000000) && (new_freq.pll >= 1200000000)) {
+        if((old_freq.pll <= 1224000000) && (new_freq.pll >= 1224000000)) {
             /* set to 1200Mhz (1:3:2:2) */
-            old_freq.pll = 1200000000;
+            old_freq.pll = 1224000000;
             old_freq.div.cpu_div = 1;
             old_freq.div.axi_div = 3;
             old_freq.div.ahb_div = 2;
@@ -261,9 +261,9 @@ static int __set_cpufreq_target(struct sun4i_cpu_freq_t *old, struct sun4i_cpu_f
         ret |= __set_cpufreq_hw(&new_freq);
     }
     else if(new_freq.pll < old_freq.pll) {
-        if((old_freq.pll > 1200000000) && (new_freq.pll <= 1200000000)) {
+        if((old_freq.pll > 1224000000) && (new_freq.pll <= 1224000000)) {
             /* set to 1200Mhz (1:3:2:2) */
-            old_freq.pll = 1200000000;
+            old_freq.pll = 1224000000;
             old_freq.div.cpu_div = 1;
             old_freq.div.axi_div = 3;
             old_freq.div.ahb_div = 2;
