@@ -174,6 +174,8 @@ static void aw_set_clkevt_mode(enum clock_event_mode mode, struct clock_event_de
             break;
         }
 
+        case CLOCK_EVT_MODE_SHUTDOWN:
+        case CLOCK_EVT_MODE_UNUSED:
         default:
         {
             /* disable clock event device */
@@ -253,9 +255,12 @@ static irqreturn_t aw_clkevt_irq(int irq, void *handle)
         CLKSRC_DBG("aw_clkevt_irq!\n");
         /* clear pending */
         TMR_REG_IRQ_STAT = (1<<1);
+
+        if(unlikely(aw_clock_event.event_handler == NULL))
+            return IRQ_HANDLED;
+
         /* clock event interrupt handled */
         aw_clock_event.event_handler(&aw_clock_event);
-
         return IRQ_HANDLED;
     }
 
